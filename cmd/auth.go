@@ -60,15 +60,26 @@ func oauth2Config(authRequest AuthRequest) *oauth2.Config {
 }
 
 type debugTransport struct {
-	t http.RoundTripper
+	t  http.RoundTripper
+	ar AuthRequest
 }
 
 func (d debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	pws := []string{d.ar.ClientSecret, d.ar.Password}
+	stripPasswords := func(str string) string {
+		res := str
+		for _, s := range pws {
+			res = strings.Replace(res, s, "<REDACTED>", -1)
+		}
+
+		return res
+	}
+
 	reqDump, err := httputil.DumpRequest(req, true)
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("%s", reqDump)
+	log.Print(stripPasswords(string(reqDump)))
 
 	resp, err := d.t.RoundTrip(req)
 	if err != nil {
@@ -80,7 +91,7 @@ func (d debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		resp.Body.Close()
 		return nil, err
 	}
-	log.Printf("%s", respDump)
+	log.Print(stripPasswords(string(respDump)))
 	return resp, nil
 }
 
@@ -147,7 +158,7 @@ func Auth(authRequest AuthRequest) (AuthResponse, error) {
 	}
 
 	if debugHTTP {
-		client.Transport = debugTransport{client.Transport}
+		client.Transport = debugTransport{t: client.Transport, ar: authRequest}
 	}
 
 	ctx := oidc.ClientContext(context.Background(), client)
@@ -259,7 +270,7 @@ Loop:
 
 	approvalLocation, err := loginResp.Location()
 	if err != nil {
-		return AuthResponse{}, err
+		return AuthResponse{}, fmt.Errorf("invalid username or password")
 	}
 
 	resp, err = client.Get(approvalLocation.String())
