@@ -80,7 +80,7 @@ func init() {
 		defCfgFile = cfg
 	}
 
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "kubeconfig", defCfgFile, "config file")
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "kubeconfig", defCfgFile, "kubeconfig file")
 	RootCmd.PersistentFlags().BoolVarP(&skipTLS, "skip-tls-validation", "k", false, "Skip TLS validation")
 	RootCmd.PersistentFlags().BoolVar(&debugHTTP, "debug-http", false, "Debug HTTP connections")
 }
@@ -108,7 +108,7 @@ func initConfig() {
 		}
 	}
 
-	kubeConfig := clientcmdapi.NewConfig()
+	kubeConfig = clientcmdapi.NewConfig()
 	if len(kubecfgBytes) == 0 {
 		fmt.Println("No kubeconfig file found on disk, starting new configuration")
 		return

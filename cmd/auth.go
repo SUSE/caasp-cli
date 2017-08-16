@@ -1,3 +1,17 @@
+// Copyright © 2017 SUSE
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package cmd
 
 import (
@@ -139,22 +153,22 @@ func httpClientForRootCAs(rootCAs string) (*http.Client, error) {
 
 // Auth will perform an OIDC / OAuth2 handshake without requiring a web browser
 func Auth(authRequest AuthRequest) (AuthResponse, error) {
-	client := http.DefaultClient
-	client.Transport = defaultTransport()
 	var err error
-
-	if authRequest.RootCAs != "" {
-		client, err = httpClientForRootCAs(authRequest.RootCAs)
-		if err != nil {
-			return AuthResponse{}, err
-		}
-	}
+	var client *http.Client
 
 	if skipTLS {
 		client, err = httpClientForSkipTLS()
 		if err != nil {
 			return AuthResponse{}, err
 		}
+	} else if authRequest.RootCAs != "" {
+		client, err = httpClientForRootCAs(authRequest.RootCAs)
+		if err != nil {
+			return AuthResponse{}, err
+		}
+	} else {
+		client = http.DefaultClient
+		client.Transport = defaultTransport()
 	}
 
 	if debugHTTP {
