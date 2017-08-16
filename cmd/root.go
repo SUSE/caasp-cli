@@ -38,6 +38,7 @@ var (
 	skipTLS    bool
 	kubeConfig *clientcmdapi.Config
 	debugHTTP  bool
+	homeDir    string
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -62,14 +63,15 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	cfg, err := homedir.Dir()
+	var err error
+	homeDir, err = homedir.Dir()
 	if err != nil {
 		fmt.Println("Unable to determine home directory!")
 		fmt.Println("Error was:", err)
 		os.Exit(1)
 	}
 
-	cfg = path.Join(cfg, ".kube", "config")
+	cfg := path.Join(homeDir, ".kube", "config")
 	cfgEnv := os.Getenv("KUBECONFIG")
 	var defCfgFile string
 	if cfgEnv != "" {
@@ -78,18 +80,32 @@ func init() {
 		defCfgFile = cfg
 	}
 
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "kubeconfig", defCfgFile, "config file (default is $HOME/.kube/config)")
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "kubeconfig", defCfgFile, "config file")
 	RootCmd.PersistentFlags().BoolVarP(&skipTLS, "skip-tls-validation", "k", false, "Skip TLS validation")
 	RootCmd.PersistentFlags().BoolVar(&debugHTTP, "debug-http", false, "Debug HTTP connections")
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	kubecfgBytes, err := ioutil.ReadFile(cfgFile)
-	if err != nil {
-		fmt.Println("Unable to read kubeconfig file: ", cfgFile)
-		fmt.Println("Error was:", err)
-		os.Exit(1)
+	var kubecfgBytes []byte
+	var err error
+
+	if _, err := os.Stat(cfgFile); err != nil {
+		_, ok := err.(*os.PathError)
+		if ok {
+			err = os.MkdirAll(path.Join(homeDir, ".kube"), 0700)
+			if err != nil {
+				fmt.Println("Unable to create", path.Join(homeDir, ".kube"), "directory, error was:", err.Error())
+				os.Exit(1)
+			}
+		}
+	} else {
+		kubecfgBytes, err = ioutil.ReadFile(cfgFile)
+		if err != nil {
+			fmt.Println("Unable to read kubeconfig file: ", cfgFile)
+			fmt.Println("Error was:", err)
+			os.Exit(1)
+		}
 	}
 
 	kubeConfig := clientcmdapi.NewConfig()
