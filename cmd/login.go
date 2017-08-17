@@ -22,6 +22,7 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	v1 "k8s.io/client-go/pkg/api/v1"
 
@@ -48,6 +49,12 @@ var loginCmd = &cobra.Command{
 	Long:  "",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cluster, ok := kubeConfig.Clusters[login.clusterName]
+		if !ok {
+			cluster = &api.Cluster{
+				Server:                login.server,
+				InsecureSkipTLSVerify: skipTLS,
+			}
+		}
 
 		serverURL := ""
 		if ok {
@@ -125,6 +132,9 @@ func findDex(kubeAPI string) (string, error) {
 
 	var dexURL string
 
+	// we ship Dex in a NodePort-based configuration, but it's possible that a user
+	// has modified the service type (in response to a cloud deployment or the like)
+	// so we should make a best effort to work with that.
 	switch service.Spec.Type {
 	case v1.ServiceTypeNodePort:
 		dexURL = fmt.Sprintf("https://%s:%d", u.Hostname(), service.Spec.Ports[0].NodePort)
