@@ -16,7 +16,9 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/url"
+	"strings"
 
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -26,8 +28,10 @@ import (
 
 	v1 "k8s.io/client-go/pkg/api/v1"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/cobra"
+
+	// cause the oidc provider to load
+	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 )
 
 type loginDetails struct {
@@ -50,11 +54,42 @@ var loginCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cluster, ok := kubeConfig.Clusters[login.clusterName]
 		if !ok {
-			cluster = &api.Cluster{
-				Server:                login.server,
-				InsecureSkipTLSVerify: skipTLS,
-			}
+			kubeConfig.Clusters[login.clusterName] = &api.Cluster{}
+			cluster = kubeConfig.Clusters[login.clusterName]
 		}
+		cluster.Server = login.server
+		cluster.InsecureSkipTLSVerify = skipTLS
+		if login.rootCA != "" {
+			rootCA, err := ioutil.ReadFile(login.rootCA)
+			if err != nil {
+				return fmt.Errorf("unable to read root certificate authority file: %s", err.Error())
+			}
+			cluster.CertificateAuthorityData = rootCA
+		}
+
+		user, ok := kubeConfig.AuthInfos[login.username]
+		if !ok {
+			kubeConfig.AuthInfos[login.username] = &api.AuthInfo{}
+			user = kubeConfig.AuthInfos[login.username]
+		}
+		user.Password = ""
+		user.Username = ""
+
+		ctx, ok := kubeConfig.Contexts[login.clusterName]
+		if !ok {
+			kubeConfig.Contexts[login.clusterName] = &api.Context{}
+			ctx = kubeConfig.Contexts[login.clusterName]
+		}
+
+		ctx.AuthInfo = login.username
+		ctx.Cluster = login.clusterName
+
+		if kubeConfig.CurrentContext == "" {
+			kubeConfig.CurrentContext = login.clusterName
+		}
+
+		// save this early, as the kubernetes client-go needs to read this file
+		saveKubeconfig(cfgFile, kubeConfig)
 
 		serverURL := ""
 		if ok {
@@ -86,13 +121,22 @@ var loginCmd = &cobra.Command{
 		authResponse, err := Auth(authRequest)
 		if err != nil {
 			fmt.Println("Unable to auth, error was", err.Error())
+			return err
 		}
 
-		spew.Dump("clusters", kubeConfig.Clusters)
+		user.AuthProvider = &api.AuthProviderConfig{
+			Name: "oidc",
+			Config: map[string]string{
+				"idp-issuer-url": dexServiceURL,
+				"client-id":      clientID,
+				"client-secret":  clientSecret,
+				"extra-scopes":   strings.Join(authResponse.Scopes, " "),
+				"id-token":       authResponse.IDToken,
+				"refresh-token":  authResponse.RefreshToken,
+			},
+		}
 
-		spew.Dump("authResponse", authResponse)
-
-		spew.Dump("dex service", dexServiceURL)
+		saveKubeconfig(cfgFile, kubeConfig)
 
 		return nil
 	},

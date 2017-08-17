@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -111,7 +112,6 @@ func initConfig() {
 	kubeConfig = clientcmdapi.NewConfig()
 	if len(kubecfgBytes) == 0 {
 		fmt.Println("No kubeconfig file found on disk, starting new configuration")
-		return
 	}
 
 	decoded, _, err := clientcmdlatest.Codec.Decode(kubecfgBytes, &schema.GroupVersionKind{Version: clientcmdlatest.Version, Kind: "Config"},
@@ -122,4 +122,22 @@ func initConfig() {
 		os.Exit(1)
 	}
 	kubeConfig = decoded.(*clientcmdapi.Config)
+}
+
+func saveKubeconfig(filename string, kubeConfig *clientcmdapi.Config) error {
+	f, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	w := bufio.NewWriter(f)
+
+	err = clientcmdlatest.Codec.Encode(kubeConfig, w)
+	if err != nil {
+		return err
+	}
+
+	w.Flush()
+
+	return nil
 }

@@ -57,10 +57,12 @@ type AuthRequest struct {
 
 // AuthResponse is the final auth response
 type AuthResponse struct {
+	IDToken      string
 	AccessToken  string
 	TokenType    string
 	Expiry       time.Time
 	RefreshToken string
+	Scopes       []string
 }
 
 func oauth2Config(authRequest AuthRequest) *oauth2.Config {
@@ -213,7 +215,7 @@ func Auth(authRequest AuthRequest) (AuthResponse, error) {
 	authRequest.verifier = provider.Verifier(&oidc.Config{ClientID: authRequest.ClientID})
 
 	// Setup complete, start the actual auth
-	authRequest.scopes = []string{"openid", "profile", "email", "offline_access"}
+	authRequest.scopes = []string{"openid", "profile", "email", "offline_access", "groups"}
 	authCodeURL := oauth2Config(authRequest).AuthCodeURL("", oauth2.AccessTypeOffline)
 
 	resp, err := client.Get(authCodeURL)
@@ -225,8 +227,7 @@ func Auth(authRequest AuthRequest) (AuthResponse, error) {
 
 	z := html.NewTokenizer(resp.Body)
 
-	var foundReq bool
-	var actionLink, reqField string
+	var actionLink string
 
 Loop:
 	for {
@@ -247,22 +248,11 @@ Loop:
 						break
 					}
 				}
-			case "input":
-				for _, a := range t.Attr {
-					if a.Key == "name" && a.Val == "req" {
-						foundReq = true
-					}
-					if foundReq && a.Key == "value" {
-						reqField = a.Val
-						break
-					}
-				}
 			}
 		}
 	}
 
 	formValues := url.Values{}
-	formValues.Add("req", reqField)
 	formValues.Add("login", authRequest.Username)
 	formValues.Add("password", authRequest.Password)
 
@@ -309,10 +299,12 @@ Loop:
 	}
 
 	result := AuthResponse{
+		IDToken:      token.Extra("id_token").(string),
 		AccessToken:  token.AccessToken,
 		RefreshToken: token.RefreshToken,
 		TokenType:    token.TokenType,
 		Expiry:       token.Expiry,
+		Scopes:       authRequest.scopes,
 	}
 
 	return result, nil
