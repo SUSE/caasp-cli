@@ -115,7 +115,7 @@ var loginCmd = &cobra.Command{
 			IssuerURL:    dexServiceURL,
 			Username:     login.username,
 			Password:     login.password,
-			RootCAs:      login.rootCA,
+			RootCA:       cluster.CertificateAuthorityData,
 		}
 
 		authResponse, err := Auth(authRequest)

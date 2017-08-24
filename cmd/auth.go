@@ -19,7 +19,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -44,7 +43,7 @@ type AuthRequest struct {
 	IssuerURL    string
 	Username     string
 	Password     string
-	RootCAs      string
+	RootCA       []byte
 
 	provider *oidc.Provider
 	verifier *oidc.IDTokenVerifier
@@ -135,14 +134,10 @@ func httpClientForSkipTLS() (*http.Client, error) {
 }
 
 // return an HTTP client which trusts the provided root CAs.
-func httpClientForRootCAs(rootCAs string) (*http.Client, error) {
+func httpClientForRootCAs(rootCA []byte) (*http.Client, error) {
 	tlsConfig := tls.Config{RootCAs: x509.NewCertPool()}
-	rootCABytes, err := ioutil.ReadFile(rootCAs)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read root-ca: %v", err)
-	}
-	if !tlsConfig.RootCAs.AppendCertsFromPEM(rootCABytes) {
-		return nil, fmt.Errorf("no certs found in root CA file %q", rootCAs)
+	if !tlsConfig.RootCAs.AppendCertsFromPEM(rootCA) {
+		return nil, fmt.Errorf("no valid certificates found in root CA file")
 	}
 
 	transport := defaultTransport()
@@ -163,8 +158,8 @@ func Auth(authRequest AuthRequest) (AuthResponse, error) {
 		if err != nil {
 			return AuthResponse{}, err
 		}
-	} else if authRequest.RootCAs != "" {
-		client, err = httpClientForRootCAs(authRequest.RootCAs)
+	} else if len(authRequest.RootCA) > 0 {
+		client, err = httpClientForRootCAs(authRequest.RootCA)
 		if err != nil {
 			return AuthResponse{}, err
 		}
