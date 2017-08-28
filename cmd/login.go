@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -127,12 +128,13 @@ var loginCmd = &cobra.Command{
 		user.AuthProvider = &api.AuthProviderConfig{
 			Name: "oidc",
 			Config: map[string]string{
-				"idp-issuer-url": dexServiceURL,
-				"client-id":      clientID,
-				"client-secret":  clientSecret,
-				"extra-scopes":   strings.Join(authResponse.Scopes, " "),
-				"id-token":       authResponse.IDToken,
-				"refresh-token":  authResponse.RefreshToken,
+				"idp-issuer-url":                 dexServiceURL,
+				"client-id":                      clientID,
+				"client-secret":                  clientSecret,
+				"extra-scopes":                   strings.Join(authResponse.Scopes, " "),
+				"id-token":                       authResponse.IDToken,
+				"refresh-token":                  authResponse.RefreshToken,
+				"idp-certificate-authority-data": base64.StdEncoding.EncodeToString(cluster.CertificateAuthorityData),
 			},
 		}
 
