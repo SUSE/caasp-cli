@@ -50,7 +50,7 @@ var login loginDetails
 // loginCmd represents the login command
 var loginCmd = &cobra.Command{
 	Use:   "login",
-	Short: "Login to a CaaSP cluster",
+	Short: "Login to a CaaS Platform cluster",
 	Long:  "",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cluster, ok := kubeConfig.Clusters[login.clusterName]
@@ -107,7 +107,7 @@ var loginCmd = &cobra.Command{
 
 		dexServiceURL, err := findDex(serverURL)
 		if err != nil {
-			return fmt.Errorf("unable to find Dex service in CaaSP cluster, error was %s", err.Error())
+			return fmt.Errorf("unable to find Dex service in CaaS Platform cluster, error was %s", err.Error())
 		}
 
 		authRequest := AuthRequest{
@@ -147,7 +147,7 @@ var loginCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(loginCmd)
 
-	loginCmd.Flags().StringVarP(&login.server, "server", "s", "", "CaaSP Server URL")
+	loginCmd.Flags().StringVarP(&login.server, "server", "s", "", "CaaS Platform Server URL")
 	loginCmd.Flags().StringVarP(&login.username, "username", "u", "", "Username")
 	loginCmd.Flags().StringVarP(&login.password, "password", "p", "", "Password")
 	loginCmd.Flags().StringVarP(&login.rootCA, "root-ca", "r", "", "Root certificate authority chain file")
@@ -188,7 +188,7 @@ func findDex(kubeAPI string) (string, error) {
 		dexURL = fmt.Sprintf("https://%s:%d", service.Spec.ClusterIP, service.Spec.Ports[0].Port)
 	case v1.ServiceTypeLoadBalancer:
 	default:
-		return "", fmt.Errorf("Dex Service in CaaSP doesn't have a proper type, cannot determine external location")
+		return "", fmt.Errorf("Dex Service in CaaS Platform doesn't have a proper type, cannot determine external location")
 	}
 
 	return dexURL, nil

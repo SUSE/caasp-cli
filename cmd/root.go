@@ -45,7 +45,7 @@ var (
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "caasp-cli",
-	Short: "SUSE CaaSP CLI",
+	Short: "SUSE CaaS Platform CLI",
 	Long:  "",
 	// Uncomment the following line if your bare application
 	// has an action associated with it:

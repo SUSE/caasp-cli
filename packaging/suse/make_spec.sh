@@ -42,7 +42,7 @@ cat <<EOF > ${NAME}.spec
 Name:           $NAME
 Version:        $VERSION
 Release:        0
-Summary:        CLI for interacting with SUSE CaaSP Clusters
+Summary:        CLI for interacting with SUSE CaaS Platform Clusters
 License:        Apache-2.0
 Group:          System/Management
 Url:            https://github.com/kubic-project/caasp-cli
@@ -56,7 +56,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 %{go_provides}
 
 %description
-SUSE CaaSP CLI provides command-line tooling for managing a SUSE CaaSP cluster
+SUSE CaaS Platform CLI provides command-line tooling for managing a SUSE CaaS Platform cluster
 
 %prep
 %setup -q

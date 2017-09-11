@@ -1,18 +1,18 @@
-# CaaSP CLI
+# CaaS Platform CLI
 
-This is the command line client for interacting with a CaaSP cluster.
+This is the command line client for interacting with a CaaS Platform cluster.
 
 ## Supported commands
 
 ```text
-SUSE CaaSP CLI
+SUSE CaaS Platform CLI
 
 Usage:
   caasp-cli [command]
 
 Available Commands:
   help        Help about any command
-  login       Login to a CaaSP cluster
+  login       Login to a CaaS Platform cluster
   status      A brief description of your command
 
 Flags:
@@ -27,7 +27,7 @@ Use "caasp-cli [command] --help" for more information about a command.
 ### Login
 
 ```text
-Login to a CaaSP cluster
+Login to a CaaS Platform cluster
 
 Usage:
   caasp-cli login [flags]
@@ -37,7 +37,7 @@ Flags:
   -h, --help                  help for login
   -p, --password string       Password
   -r, --root-ca string        Root certificate authority chain file
-  -s, --server string         CaaSP Server URL
+  -s, --server string         CaaS Platform Server URL
   -u, --username string       Username
 
 Global Flags:
