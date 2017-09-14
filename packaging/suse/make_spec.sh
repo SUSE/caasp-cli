@@ -59,7 +59,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 SUSE CaaS Platform CLI provides command-line tooling for managing a SUSE CaaS Platform cluster
 
 %prep
-%setup -q
+%setup -q -n ${NAME}-${SAFE_BRANCH}
 
 %build
 %{goprep} github.com/kubic-project/caasp-cli
