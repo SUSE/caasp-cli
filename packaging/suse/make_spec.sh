@@ -46,7 +46,7 @@ Summary:        CLI for interacting with SUSE CaaS Platform Clusters
 License:        Apache-2.0
 Group:          System/Management
 Url:            https://github.com/kubic-project/caasp-cli
-Source:         ${NAME}-${SAFE_BRANCH}
+Source:         ${SAFE_BRANCH}.tar.gz
 BuildRequires:  go >= 1.8.3
 BuildRequires:  golang-packaging
 BuildRequires:  golang(API) = 1.8
