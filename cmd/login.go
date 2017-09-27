@@ -140,6 +140,8 @@ var loginCmd = &cobra.Command{
 
 		saveKubeconfig(cfgFile, kubeConfig)
 
+		fmt.Printf("You have been logged in successfully and %s has been updated\n", cfgFile)
+
 		return nil
 	},
 }
