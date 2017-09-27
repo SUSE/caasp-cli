@@ -60,12 +60,20 @@ var loginCmd = &cobra.Command{
 		}
 		cluster.Server = login.server
 		cluster.InsecureSkipTLSVerify = skipTLS
-		if login.rootCA != "" {
-			rootCA, err := ioutil.ReadFile(login.rootCA)
-			if err != nil {
-				return fmt.Errorf("unable to read root certificate authority file: %s", err.Error())
+
+		if !skipTLS {
+			if login.rootCA != "" {
+				rootCA, err := ioutil.ReadFile(login.rootCA)
+				if err != nil {
+					return fmt.Errorf("unable to read root certificate authority file: %s", err.Error())
+				}
+				cluster.CertificateAuthorityData = rootCA
 			}
-			cluster.CertificateAuthorityData = rootCA
+		} else {
+			// bsc#1059370 - clear out the CA if the user specified to skip TLS
+			// Kubernetes will not allow you to set InsecureSkipVerify and specify
+			// a certificate
+			cluster.CertificateAuthorityData = nil
 		}
 
 		user, ok := kubeConfig.AuthInfos[login.username]
