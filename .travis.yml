@@ -1,0 +1,35 @@
+language: go
+
+go:
+  - 1.8
+
+before_script:
+  - mkdir -p /tmp/output/darwin
+  - mkdir -p /tmp/output/linux
+  - mkdir -p /tmp/output/windows
+  - cp README.md LICENSE /tmp/output/darwin
+  - cp README.md LICENSE /tmp/output/linux
+  - cp README.md LICENSE /tmp/output/windows
+
+script: 
+  - GOOS=linux GOARCH=amd64 go build -o /tmp/output/linux/caasp-cli -i main.go
+  - GOOS=darwin GOARCH=amd64 go build -o /tmp/output/darwin/caasp-cli -i main.go
+  - GOOS=windows GOARCH=amd64 go build -o /tmp/output/darwin/caasp-cli.exe -i main.go
+
+after_success:
+  - cd /tmp/output/darwin && tar cjf ../caasp-cli-darwin-x86_64.tar.bz2 .
+  - cd /tmp/output/linux && tar cjf ../caasp-cli-linux-x86_64.tar.bz2 .
+  - cd /tmp/output/windows && zip ../caasp-cli-windows-x86_64.zip .
+
+# deploy:
+#   provider: releases
+#   api_key:
+#     secure:
+#   file:
+#     - /tmp/output/caasp-cli-darwin-x86_64.tar.bz2
+#     - /tmp/output/caasp-cli-linux-x86_64.tar.bz2
+#     - /tmp/output/caasp-cli-windows-x86_64.zip
+#   skip_cleanup: true
+#   on:
+#     repo: kubic-project/caasp-cli
+#     tags: true
