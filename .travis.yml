@@ -21,16 +21,15 @@ after_success:
   - cd /tmp/output/linux && tar cjf ../caasp-cli-linux-x86_64.tar.bz2 .
   - cd /tmp/output/windows && zip ../caasp-cli-windows-x86_64.zip .
 
-# deploy:
-#   provider: releases
-#   api_key:
-#     secure:
-#   file:
-#     - /tmp/output/caasp-cli-darwin-x86_64.tar.bz2
-#     - /tmp/output/caasp-cli-linux-x86_64.tar.bz2
-#     - /tmp/output/caasp-cli-windows-x86_64.zip
-#   skip_cleanup: true
-#   on:
-#     repo: kubic-project/caasp-cli
-#     tags: true
-#
+deploy:
+  provider: releases
+  api_key:
+    secure: VPn3V/fpcdy4U8Eh7GJONnX3HkDyOBRuKpaSjJ3ip+8vVQ0QVAiF8eHKKg4yb6O+mIpdw3pw+B7qKlyKxzfaktN6Lev3PRnAo+EIIvDOjF4O5HQc+ViMRT/q+rG1NAIjtYGkGMKd+YF5TXo/mhllto3kIMthrufuhvSdcmB/K+6OB9eYwSOf0nef5WLfI3usde6cs1UC39VMX9BZFWZoKxGo6DCS8CNfcovNzI9l8PVoygF2DA9LwDd8by5dclO9jGYKXMjNfagB36Ji6ERk06X2McQ/J8d6HnyMI0SdOiPDFUuGWnqmeCDIWis0GUTFSSbjGwoSWtobN2JlaPYjleln9FkaqFbqGf3YHtrqbnwRiDn6hPNXJ3wPExHFlWFtNm9Osfpkbb2uwxzjH/A9FY6k0NbwAgeJpDraGl0xsVjWHr0q7vLtVp/U0A3Wr6ygNPpN1eWTmANRgtu2uA4heFx/1R4hgNIY52nSsGSE/AFjMybfEiQlTxn1KTcT6eTPpqi90RgGGk20ACeK6ImZh0U+q+WtpfcqzfXY7wuG+TdzVzeaRaWYg0Kbe7mQ+H/q9NsBJpJ+/K8Iu43Lvpnx8bEqKcT64Wzh+PzimNzkepehYrlRjQZq4HEW8FctCRKkHHQoGAIYCfvIVCohzTbINJHPutCthHDgPQVzBkEfQ9Y=
+  file:
+    - /tmp/output/caasp-cli-darwin-x86_64.tar.bz2
+    - /tmp/output/caasp-cli-linux-x86_64.tar.bz2
+    - /tmp/output/caasp-cli-windows-x86_64.zip
+  skip_cleanup: true
+  on:
+    repo: kubic-project/caasp-cli
+    tags: true
