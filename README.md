@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/kubic-project/caasp-cli.svg?branch=master)](https://travis-ci.org/kubic-project/caasp-cli)
+
 # CaaS Platform CLI
 
 This is the command line client for interacting with a CaaS Platform cluster.

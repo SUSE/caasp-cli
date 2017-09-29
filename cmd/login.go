@@ -15,11 +15,14 @@
 package cmd
 
 import (
+	"bufio"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"os"
 	"strings"
+	"syscall"
 
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -33,6 +36,8 @@ import (
 
 	// cause the oidc provider to load
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 type loginDetails struct {
@@ -60,12 +65,20 @@ var loginCmd = &cobra.Command{
 		}
 		cluster.Server = login.server
 		cluster.InsecureSkipTLSVerify = skipTLS
-		if login.rootCA != "" {
-			rootCA, err := ioutil.ReadFile(login.rootCA)
-			if err != nil {
-				return fmt.Errorf("unable to read root certificate authority file: %s", err.Error())
+
+		if !skipTLS {
+			if login.rootCA != "" {
+				rootCA, err := ioutil.ReadFile(login.rootCA)
+				if err != nil {
+					return fmt.Errorf("unable to read root certificate authority file: %s", err.Error())
+				}
+				cluster.CertificateAuthorityData = rootCA
 			}
-			cluster.CertificateAuthorityData = rootCA
+		} else {
+			// bsc#1059370 - clear out the CA if the user specified to skip TLS
+			// Kubernetes will not allow you to set InsecureSkipVerify and specify
+			// a certificate
+			cluster.CertificateAuthorityData = nil
 		}
 
 		user, ok := kubeConfig.AuthInfos[login.username]
@@ -82,16 +95,6 @@ var loginCmd = &cobra.Command{
 			ctx = kubeConfig.Contexts[login.clusterName]
 		}
 
-		ctx.AuthInfo = login.username
-		ctx.Cluster = login.clusterName
-
-		if kubeConfig.CurrentContext == "" {
-			kubeConfig.CurrentContext = login.clusterName
-		}
-
-		// save this early, as the kubernetes client-go needs to read this file
-		saveKubeconfig(cfgFile, kubeConfig)
-
 		serverURL := ""
 		if ok {
 			serverURL = cluster.Server
@@ -104,6 +107,44 @@ var loginCmd = &cobra.Command{
 		if serverURL == "" {
 			return fmt.Errorf("you must specify --server")
 		}
+
+		login.username = strings.TrimSpace(login.username)
+		login.password = strings.TrimSpace(login.password)
+		if login.username == "" {
+			reader := bufio.NewReader(os.Stdin)
+			fmt.Print("Enter your email address: ")
+			username, _ := reader.ReadString('\n')
+			login.username = strings.TrimSpace(username)
+		}
+
+		if login.username == "" {
+			// is it still empty?
+			return fmt.Errorf("A email address must be provided")
+		}
+
+		if login.password == "" {
+			fmt.Print("Enter your password: ")
+			bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+			if err != nil {
+				return fmt.Errorf("error during password input, cannot continue: %s", err.Error())
+			}
+			login.password = strings.TrimSpace(string(bytePassword))
+		}
+
+		if login.password == "" {
+			// is it still empty?
+			return fmt.Errorf("A password must be provided")
+		}
+
+		ctx.AuthInfo = login.username
+		ctx.Cluster = login.clusterName
+
+		if kubeConfig.CurrentContext == "" {
+			kubeConfig.CurrentContext = login.clusterName
+		}
+
+		// save this early, as the kubernetes client-go needs to read this file
+		saveKubeconfig(cfgFile, kubeConfig)
 
 		dexServiceURL, err := findDex(serverURL)
 		if err != nil {
@@ -139,6 +180,8 @@ var loginCmd = &cobra.Command{
 		}
 
 		saveKubeconfig(cfgFile, kubeConfig)
+
+		fmt.Printf("You have been logged in successfully and %s has been updated\n", cfgFile)
 
 		return nil
 	},
