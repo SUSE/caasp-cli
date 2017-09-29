@@ -16,10 +16,10 @@ script:
   - GOOS=darwin GOARCH=amd64 go build -o /tmp/output/darwin/caasp-cli -i main.go
   - GOOS=windows GOARCH=amd64 go build -o /tmp/output/darwin/caasp-cli.exe -i main.go
 
-pre_deploy:
-  - cd /tmp/output/darwin && tar cjf /tmp/output/caasp-cli-darwin-x86_64.tar.bz2 .
-  - cd /tmp/output/linux && tar cjf /tmp/output/caasp-cli-linux-x86_64.tar.bz2 .
-  - cd /tmp/output/windows && zip /tmp/output/caasp-cli-windows-x86_64.zip .
+after_success:
+  - cd /tmp/output/darwin && tar cjf ../caasp-cli-darwin-x86_64.tar.bz2 .
+  - cd /tmp/output/linux && tar cjf ../caasp-cli-linux-x86_64.tar.bz2 .
+  - cd /tmp/output/windows && zip -r ../caasp-cli-windows-x86_64.zip .
 
 deploy:
   provider: releases
