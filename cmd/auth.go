@@ -210,7 +210,7 @@ func Auth(authRequest AuthRequest) (AuthResponse, error) {
 	authRequest.verifier = provider.Verifier(&oidc.Config{ClientID: authRequest.ClientID})
 
 	// Setup complete, start the actual auth
-	authRequest.scopes = []string{"openid", "profile", "email", "offline_access", "groups"}
+	authRequest.scopes = []string{"openid", "profile", "email", "offline_access", "groups", "audience:server:client_id:kubernetes"}
 	authCodeURL := oauth2Config(authRequest).AuthCodeURL("", oauth2.AccessTypeOffline)
 
 	resp, err := client.Get(authCodeURL)
