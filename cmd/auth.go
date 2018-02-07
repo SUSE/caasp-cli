@@ -26,6 +26,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"io/ioutil"
+	"regexp"
 
 	"github.com/coreos/go-oidc"
 	"golang.org/x/net/html"
@@ -34,7 +36,7 @@ import (
 
 // Simulate a OAuth2 Web Flow in a command line app
 
-const redirectURL = "http://127.0.0.1"
+const redirectURL = "urn:ietf:wg:oauth:2.0:oob"
 
 // AuthRequest represents an OAuth2 auth request flow
 type AuthRequest struct {
@@ -210,7 +212,7 @@ func Auth(authRequest AuthRequest) (AuthResponse, error) {
 	authRequest.verifier = provider.Verifier(&oidc.Config{ClientID: authRequest.ClientID})
 
 	// Setup complete, start the actual auth
-	authRequest.scopes = []string{"openid", "profile", "email", "offline_access", "groups"}
+	authRequest.scopes = []string{"openid", "profile", "email", "offline_access", "groups", "audience:server:client_id:kubernetes"}
 	authCodeURL := oauth2Config(authRequest).AuthCodeURL("", oauth2.AccessTypeOffline)
 
 	resp, err := client.Get(authCodeURL)
@@ -278,13 +280,21 @@ Loop:
 	}
 
 	defer resp.Body.Close()
-
-	callbackLocation, err := resp.Location()
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return AuthResponse{}, err
 	}
 
-	code := callbackLocation.Query().Get("code")
+	r, _ := regexp.Compile("(?:(?:.|\n)*)value=\"(.*?)\"(?:(?:.|\n)*)")
+
+	match := r.FindStringSubmatch(string(body))
+
+	// We expect two matches - the entire body, and then just the code group
+	if (len(match) != 2) {
+		return AuthResponse{}, fmt.Errorf("failed to extract token from OOB response")
+	}
+
+	code := match[1]
 
 	client.CheckRedirect = oldRedirectChecker
 
