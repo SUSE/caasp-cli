@@ -70,7 +70,12 @@ SUSE CaaS Platform CLI provides command-line tooling for managing a SUSE CaaS Pl
 
 %files
 %defattr(-,root,root)
-%doc README.md LICENSE
+%doc README.md
+%if 0%{?suse_version} < 1500
+%doc LICENSE
+%else
+%license LICENSE
+%endif
 %{_bindir}/caasp-cli
 
 %changelog
