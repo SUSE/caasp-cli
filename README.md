@@ -2,7 +2,7 @@
 
 # CaaS Platform CLI
 
-This is the command line client for interacting with a CaaS Platform cluster.
+This is the command line client for interacting with a CaaS Platform cluster (v1, v2 and v3 only).
 
 ## Supported commands
 
